@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hook Mining Engine 🚀</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface2: #f0efe9;
+      --border: #e2e0d8;
+      --text: #1a1917;
+      --muted: #7a7870;
+      --accent: #ff4d00;
+      --accent2: #1a1917;
+      --shadow: 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 48px 16px 80px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .header .badge {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
+      border-radius: 100px;
+      padding: 4px 14px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .header h1 span { color: var(--accent); }
+    .header p {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 400;
+      max-width: 400px;
+      margin-inline: auto;
+    }
+
+    /* ── Search Card ── */
+    .search-card {
+      max-width: 640px;
+      margin: 0 auto 48px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow-lg);
+    }
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .input-wrap {
+      position: relative;
+      flex: 1;
+    }
+    .input-wrap svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    input#topic {
+      width: 100%;
+      padding: 14px 16px 14px 42px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface2);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input#topic::placeholder { color: var(--muted); }
+    input#topic:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255,77,0,0.10);
+      background: var(--surface);
+    }
+    button#run-btn {
+      padding: 14px 24px;
+      background: var(--accent2);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.18s, transform 0.12s;
+    }
+    button#run-btn:hover:not(:disabled) { background: #2d2c29; transform: translateY(-1px); }
+    button#run-btn:active:not(:disabled) { transform: translateY(0); }
+    button#run-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Progress ── */
+    #progress-wrap {
+      display: none;
+      margin-top: 22px;
+    }
+    .progress-bar-bg {
+      height: 4px;
+      background: var(--surface2);
+      border-radius: 100px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 100px;
+      transition: width 0.55s cubic-bezier(0.4,0,0.2,1);
+    }
+    .progress-steps {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .step-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 100px;
+      border: 1.5px solid var(--border);
+      color: var(--muted);
+      background: var(--surface2);
+      transition: all 0.3s;
+    }
+    .step-pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(255,77,0,0.07);
+    }
+    .step-pill.done {
+      border-color: #22c55e;
+      color: #16a34a;
+      background: rgba(34,197,94,0.08);
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    button#run-btn.loading .spinner { display: block; }
+    button#run-btn.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    #error-box {
+      display: none;
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: #fff3f0;
+      border: 1.5px solid #ffc5b3;
+      border-radius: 12px;
+      color: #c0392b;
+      font-size: 0.9rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Results ── */
+    #results {
+      max-width: 880px;
+      margin: 0 auto;
+      display: none;
+      gap: 28px;
+      flex-direction: column;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .result-card:nth-child(2) { animation-delay: 0.1s; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1.5px solid var(--border);
+      background: var(--surface2);
+    }
+    .card-header .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .card-header .icon.orange { background: rgba(255,77,0,0.12); }
+    .card-header .icon.dark   { background: #1a1917; }
+    .card-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .card-header .sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* Markdown-like rendering */
+    .card-body .content-text {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.75;
+      color: #2e2d2a;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Hook list rendering */
+    .hooks-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .hook-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .hook-item:hover {
+      border-color: #c9c7be;
+      box-shadow: var(--shadow);
+    }
+    .hook-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--accent);
+      background: rgba(255,77,0,0.10);
+      border-radius: 6px;
+      padding: 2px 7px;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+    .hook-text {
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    /* Copy button */
+    .hook-copy {
+      margin-left: auto;
+      flex-shrink: 0;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .hook-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .hook-copy.copied { border-color: #22c55e; color: #16a34a; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 56px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: #b5b3ac;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="badge">AI-Powered Research</div>
+    <h1>Hook Mining<br/><span>Engine 🚀</span></h1>
+    <p>Mine viral hooks from Reddit & Google, analyzed by AI.</p>
+  </header>
+
+  <div class="search-card">
+    <div class="input-row">
+      <div class="input-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="topic" type="text" placeholder="e.g. productivity hacks, crypto, AI tools…" autocomplete="off" />
+      </div>
+      <button id="run-btn" onclick="run()">
+        <div class="spinner"></div>
+        <span class="btn-label">Analyze →</span>
+      </button>
+    </div>
+
+    <div id="progress-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="progress-steps">
+        <span class="step-pill" id="step-reddit">Reddit</span>
+        <span class="step-pill" id="step-google">Google</span>
+        <span class="step-pill" id="step-analyze">Analysis</span>
+        <span class="step-pill" id="step-generate">Hooks</span>
+      </div>
+    </div>
+
+    <div id="error-box"></div>
+  </div>
+
+  <div id="results">
+    <div class="result-card" id="card-analysis">
+      <div class="card-header">
+        <div class="icon orange">🔍</div>
+        <div>
+          <div class="card-header"><h2 style="font-size:1rem;font-weight:700;">What's Working — Real Data Analysis</h2></div>
+          <div class="sub">Patterns extracted from Reddit &amp; Google</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <pre class="content-text" id="analysis-output"></pre>
+      </div>
+    </div>
+
+    <div class="result-card" id="card-hooks">
+      <div class="card-header">
+        <div class="icon dark" style="font-size:1rem;">✨</div>
+        <div>
+          <div><h2 style="font-size:1rem;font-weight:700;">Ready-to-Use Viral Hooks</h2></div>
+          <div class="sub">AI-generated hooks ready to copy &amp; post</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="hooks-list" id="hooks-output"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">Hook Mining Engine · Powered by Groq + Reddit + Google</div>
+
+  <script>
+    const btn       = document.getElementById('run-btn');
+    const progress  = document.getElementById('progress-wrap');
+    const bar       = document.getElementById('progress-bar');
+    const errorBox  = document.getElementById('error-box');
+    const results   = document.getElementById('results');
+    const steps     = {
+      reddit:   document.getElementById('step-reddit'),
+      google:   document.getElementById('step-google'),
+      analyze:  document.getElementById('step-analyze'),
+      generate: document.getElementById('step-generate'),
+    };
+
+    function setStep(key, state) { // state: 'active' | 'done'
+      Object.values(steps).forEach(el => {
+        if (state === 'active') {
+          const k = el.id.replace('step-', '');
+          if (k === key) el.classList.add('active');
+        }
+      });
+      if (state === 'done') steps[key].classList.replace('active', 'done');
+    }
+
+    function setProgress(pct) {
+      bar.style.width = pct + '%';
+    }
+
+    function showError(msg) {
+      errorBox.textContent = '⚠ ' + msg;
+      errorBox.style.display = 'block';
+    }
+
+    function clearUI() {
+      errorBox.style.display = 'none';
+      results.style.display  = 'none';
+      Object.values(steps).forEach(el => {
+        el.classList.remove('active', 'done');
+      });
+      setProgress(0);
+    }
+
+    async function postJSON(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${url} failed (${res.status})`);
+      return res.json();
+    }
+
+    function renderAnalysis(text) {
+      document.getElementById('analysis-output').textContent = text;
+    }
+
+    function renderHooks(text) {
+      const list = document.getElementById('hooks-output');
+      list.innerHTML = '';
+
+      // Split by numbered lines: "1. ..." or "1) ..."
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const hookLines = lines.filter(l => /^\d+[\.\)]/.test(l));
+      const source = hookLines.length >= 3 ? hookLines : lines.filter(l => l.length > 20);
+
+      source.forEach((line, i) => {
+        const clean = line.replace(/^\d+[\.\)]\s*/, '').replace(/^\*\*|\*\*$/g, '').trim();
+        if (!clean) return;
+
+        const li = document.createElement('li');
+        li.className = 'hook-item';
+
+        const num = document.createElement('span');
+        num.className = 'hook-num';
+        num.textContent = String(i + 1).padStart(2, '0');
+
+        const txt = document.createElement('span');
+        txt.className = 'hook-text';
+        txt.textContent = clean;
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'hook-copy';
+        copyBtn.textContent = 'copy';
+        copyBtn.onclick = () => {
+          navigator.clipboard.writeText(clean).then(() => {
+            copyBtn.textContent = 'copied!';
+            copyBtn.classList.add('copied');
+            setTimeout(() => {
+              copyBtn.textContent = 'copy';
+              copyBtn.classList.remove('copied');
+            }, 1800);
+          });
+        };
+
+        li.append(num, txt, copyBtn);
+        list.appendChild(li);
+      });
+
+      // Fallback if parsing failed
+      if (list.childElementCount === 0) {
+        const li = document.createElement('li');
+        li.className = 'hook-item';
+        const txt = document.createElement('pre');
+        txt.className = 'content-text';
+        txt.style.margin = '0';
+        txt.textContent = text;
+        li.appendChild(txt);
+        list.appendChild(li);
+      }
+    }
+
+    async function run() {
+      const topic = document.getElementById('topic').value.trim();
+      if (!topic) {
+        document.getElementById('topic').focus();
+        return;
+      }
+
+      clearUI();
+      btn.disabled = true;
+      btn.classList.add('loading');
+      progress.style.display = 'block';
+
+      try {
+        // Step 1: Reddit
+        setStep('reddit', 'active');
+        setProgress(10);
+        const redditPosts = await postJSON('/get-content', { topic });
+        setStep('reddit', 'done');
+        setProgress(30);
+
+        // Step 2: Google
+        setStep('google', 'active');
+        const googlePosts = await postJSON('/google-search', { topic });
+        setStep('google', 'done');
+        setProgress(50);
+
+        // Merge
+        const allPosts = [...redditPosts, ...googlePosts];
+
+        // Step 3: Analyze
+        setStep('analyze', 'active');
+        const analysis = await postJSON('/analyze', { posts: allPosts });
+        setStep('analyze', 'done');
+        setProgress(75);
+
+        // Step 4: Generate
+        setStep('generate', 'active');
+        const generated = await postJSON('/generate', { topic });
+        setStep('generate', 'done');
+        setProgress(100);
+
+        // Render
+        renderAnalysis(typeof analysis === 'string' ? analysis : JSON.stringify(analysis, null, 2));
+        renderHooks(typeof generated === 'string' ? generated : JSON.stringify(generated, null, 2));
+
+        results.style.display = 'flex';
+        setTimeout(() => results.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+      } catch (err) {
+        console.error(err);
+        showError(err.message || 'Something went wrong. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      }
+    }
+
+    // Allow Enter key
+    document.getElementById('topic').addEventListener('keydown', e => {
+      if (e.key === 'Enter') run();
+    });
+  </script>
+</body>
+</html>
