@@ -1,0 +1,102 @@
+# 📘 Hook Mining Engine – Documentation
+
+## Overview
+
+Hook Mining Engine is a lightweight AI-powered tool that helps users generate viral content hooks using real-world data sources.
+
+---
+
+## Architecture
+
+User Input → Backend → APIs → AI Processing → Output
+
+---
+
+## Data Sources
+
+1. Reddit
+
+* Public JSON endpoint
+* Provides real user-generated content
+
+2. Google Search (Serper API)
+
+* Provides broader web insights
+
+---
+
+## AI Processing
+
+* Powered by Groq API
+* Model: LLaMA 3.1
+* Used for:
+
+  * Hook extraction
+  * Pattern recognition
+  * Hook generation
+
+---
+
+## API Endpoints
+
+### 1. /get-content
+
+Fetch Reddit posts
+
+### 2. /google-search
+
+Fetch Google results
+
+### 3. /analyze
+
+Analyze patterns from data
+
+### 4. /generate
+
+Generate viral hooks
+
+---
+
+## Workflow
+
+1. Input topic
+2. Fetch Reddit + Google data
+3. Merge datasets
+4. Analyze using AI
+5. Generate hooks
+
+---
+
+## Deployment
+
+* Platform: Render
+* URL: https://hookminingengine.onrender.com/
+
+---
+
+## Key Design Decisions
+
+* Used multiple data sources for better accuracy
+* Chose Groq for fast and free inference
+* Kept UI simple and responsive
+
+---
+
+## Limitations
+
+* Depends on API availability
+* Output quality varies with topic
+
+---
+
+## Future Scope
+
+* Add trend tracking
+* Add analytics dashboard
+* Add platform-specific hooks
+
+---
+
+## Author
+
+Piyush Sharma
